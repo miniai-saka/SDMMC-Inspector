@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <PublishAot>true</PublishAot>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>inspector.ico</ApplicationIcon>
+    <AssemblyName>SDMMC-Inspector</AssemblyName>
+    <Version>3.5.0</Version>
+    <Authors>miniai-saka</Authors>
+    <Company>miniai-saka</Company>
+    <Description>eMMC and SD register diagnostics for Windows</Description>
+    <SdmmcReaderSource>$(MSBuildProjectDirectory)\..\core\sdmmc_inspect.cpp</SdmmcReaderSource>
+  </PropertyGroup>
+  <ItemGroup>
+    <DirectPInvoke Include="__Internal!sdmmc_run_reader" />
+    <NativeLibrary Include="$(NativeIntermediateOutputPath)sdmmc_reader.obj" />
+    <SdkNativeLibrary Include="shell32.lib" />
+    <LinkerArg Include="/PDBALTPATH:$(AssemblyName).pdb" />
+  </ItemGroup>
+  <Target Name="CompileSdmmcReader" BeforeTargets="LinkNative" DependsOnTargets="SetupOSSpecificProps"
+          Inputs="$(MSBuildProjectFullPath);$(SdmmcReaderSource)" Outputs="$(NativeIntermediateOutputPath)sdmmc_reader.obj">
+    <PropertyGroup>
+      <SdmmcCompiler>cl.exe</SdmmcCompiler>
+      <SdmmcCompiler Condition="'$(_CppToolsDirectory)' != ''">$(_CppToolsDirectory)cl.exe</SdmmcCompiler>
+    </PropertyGroup>
+    <MakeDir Directories="$(NativeIntermediateOutputPath)" />
+    <Exec Command="&quot;$(SdmmcCompiler)&quot; /nologo /c /O2 /W4 /EHsc /std:c++17 /Zl /DSDMMC_EMBEDDED &quot;/Fo:$(NativeIntermediateOutputPath)sdmmc_reader.obj&quot; &quot;$(SdmmcReaderSource)&quot;" />
+    <ItemGroup>
+      <FileWrites Include="$(NativeIntermediateOutputPath)sdmmc_reader.obj" />
+    </ItemGroup>
+  </Target>
+</Project>
