@@ -11,9 +11,10 @@ internal sealed partial class MainWindow
     private const int SaveExtCsdId = 181, SaveReportId = 182, SaveImageId = 183;
     private const int CopyReportId = 184, CopyRowId = 185, HideSerialId = 186;
     private const int DiskManagementId = 187, DeviceManagerId = 188, HelpId = 189, AboutId = 190;
+    private const int ApplicationSettingsId = 191, LocalAppDataSettingsId = 192;
     private const int FirstDeviceId = 2000;
 
-    private nint _fileMenu, _editMenu, _operationMenu, _viewMenu, _deviceMenu, _languageMenu;
+    private nint _fileMenu, _editMenu, _operationMenu, _viewMenu, _deviceMenu, _languageMenu, _settingsLocationMenu;
 
     private nint CreateMenus()
     {
@@ -49,6 +50,10 @@ internal sealed partial class MainWindow
                 (SystemLanguageId, Pick("Windows の設定に従う(&W)", "Use &Windows Language")),
                 (JapaneseLanguageId, "日本語 (&J)"), (EnglishLanguageId, "&English"));
             UpdateLanguageChecks();
+            _settingsLocationMenu = AddPopup(settings, Pick("設定ファイルの保存先(&S)", "&Settings File Location"),
+                (ApplicationSettingsId, Pick("実行ファイルと同じフォルダー(&A)", "&Application Folder")),
+                (LocalAppDataSettingsId, Pick(@"%LOCALAPPDATA%\SDMMCInspector (&L)", @"&Local AppData (%LOCALAPPDATA%\SDMMCInspector)")));
+            UpdateSettingsLocationChecks();
             AddPopup(menu, Pick("ヘルプ(&H)", "&Help"),
                 (HelpId, Pick("使い方(&H)\tF1", "&How to Use\tF1")),
                 (AboutId, Pick("SDMMC Inspector について(&A)", "&About SDMMC Inspector")));
@@ -150,11 +155,24 @@ internal sealed partial class MainWindow
         UpdateControls();
     }
 
-    private bool TrySavePreferences(AppPreferences changes)
+    private void UpdateSettingsLocationChecks()
+    {
+        uint selected = _preferenceStore.Location == SettingsLocation.LocalAppData
+            ? (uint)LocalAppDataSettingsId : ApplicationSettingsId;
+        CheckMenuRadioItem(_settingsLocationMenu, ApplicationSettingsId, LocalAppDataSettingsId, selected, 0);
+    }
+
+    private void ChangeSettingsLocation(SettingsLocation location)
+    {
+        if (TrySavePreferences(_preferences, location))
+            UpdateSettingsLocationChecks();
+    }
+
+    private bool TrySavePreferences(AppPreferences changes, SettingsLocation? location = null)
     {
         try
         {
-            changes.Save();
+            _preferenceStore.Save(changes, location);
             _preferences = changes;
             return true;
         }

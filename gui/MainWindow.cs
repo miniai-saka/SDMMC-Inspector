@@ -18,6 +18,7 @@ internal sealed partial class MainWindow
     private static MainWindow? _instance;
 
     private readonly ConcurrentQueue<Action> _updates = new();
+    private readonly PreferenceStore _preferenceStore = new();
     private PendingOperation? _operation;
     private List<Device> _inventory = [];
     private List<Device> _targets = [];
@@ -36,10 +37,10 @@ internal sealed partial class MainWindow
         if (args.Length > 0 && args[0] == CoreClient.ReaderMode)
             return RunNativeReader();
 
-        var application = new MainWindow();
-        _instance = application;
         try
         {
+            var application = new MainWindow();
+            _instance = application;
             return application.Run();
         }
         catch (Exception exception)
@@ -51,7 +52,7 @@ internal sealed partial class MainWindow
 
     private unsafe int Run()
     {
-        _preferences = AppPreferences.Load();
+        _preferences = _preferenceStore.Load();
         _text = UiText.Resolve(_preferences.Language, GetUserDefaultUILanguage());
         _report = _reportSource(_text);
         _module = GetModuleHandle(0);
@@ -254,6 +255,8 @@ internal sealed partial class MainWindow
             case RawId: ChangeDataView(!_rawVisible); return true;
             case TableId: ChangeDataView(raw: false); return true;
             case SettingsId: EditThresholds(); return true;
+            case ApplicationSettingsId: ChangeSettingsLocation(SettingsLocation.ApplicationFolder); return true;
+            case LocalAppDataSettingsId: ChangeSettingsLocation(SettingsLocation.LocalAppData); return true;
             case SystemLanguageId: ChangeLanguage(AppLanguage.System); return true;
             case JapaneseLanguageId: ChangeLanguage(AppLanguage.Japanese); return true;
             case EnglishLanguageId: ChangeLanguage(AppLanguage.English); return true;

@@ -8,16 +8,11 @@ internal readonly record struct AppPreferences(LifeThresholds Thresholds, int Re
     internal const int MaximumRefresh = 24 * 60 * 60;
     internal static AppPreferences Defaults => new(LifeThresholds.Defaults, 0);
 
-    private static string SettingsPath => Path.Combine(
-        Environment.GetEnvironmentVariable("LOCALAPPDATA") ??
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "SDMMCInspector", "settings.json");
-
-    internal static AppPreferences Load()
+    internal static AppPreferences Load(string path, string? fallbackPath = null)
     {
         try
         {
-            using var stream = new FileStream(SettingsPath, FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete);
+            using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete);
             if (stream.Length <= 4096)
             {
                 using var document = JsonDocument.Parse(stream);
@@ -40,6 +35,11 @@ internal readonly record struct AppPreferences(LifeThresholds Thresholds, int Re
                 }
             }
         }
+        catch (IOException error) when (fallbackPath is not null &&
+            error is FileNotFoundException or DirectoryNotFoundException)
+        {
+            return Load(fallbackPath);
+        }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException or JsonException)
         {
             // A missing or unreadable preferences file leaves the defaults in effect.
@@ -51,9 +51,8 @@ internal readonly record struct AppPreferences(LifeThresholds Thresholds, int Re
         root.TryGetProperty(name, out var value) &&
         value.ValueKind == JsonValueKind.Number && value.TryGetInt32(out int number) ? number : 0;
 
-    internal void Save()
+    internal void Save(string path)
     {
-        string path = SettingsPath;
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
         string temporary = path + "." + Guid.NewGuid().ToString("N") + ".tmp";
         try

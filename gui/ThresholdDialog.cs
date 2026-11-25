@@ -137,7 +137,7 @@ internal sealed partial class MainWindow
             try
             {
                 if (limits != _initial)
-                    (owner._preferences with { Thresholds = limits }).Save();
+                    owner._preferenceStore.Save(owner._preferences with { Thresholds = limits });
                 _applied = limits;
                 EndDialog(window, Ok);
             }

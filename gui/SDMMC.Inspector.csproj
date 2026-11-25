@@ -11,7 +11,7 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>inspector.ico</ApplicationIcon>
     <AssemblyName>SDMMC-Inspector</AssemblyName>
-    <Version>3.5.0</Version>
+    <Version>3.5.1</Version>
     <Authors>miniai-saka</Authors>
     <Company>miniai-saka</Company>
     <Description>eMMC and SD register diagnostics for Windows</Description>
